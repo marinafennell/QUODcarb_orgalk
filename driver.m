@@ -1,13 +1,12 @@
 
-
 % driver to go with QUODcarb and ORGANIG ALKALINITY stuff
 
 load data.mat; % NEW as of Nov.11
 [in] = data;
-nD = length(in);
+nD = 5; %length(in);
 
 % choose options for opt structure
-opt.K1K2 = 4; % option for K1K2 formulation
+opt.K1K2 = 16; % option for K1K2 formulation
 opt.KSO4 = 1;  % option for KSO4 formulation
 opt.KF   = 2;  % option for KF formulation
 opt.TB   = 2;  % option for TB formulation
@@ -21,6 +20,9 @@ opt.printmes = 0; % 1 = on, 0 = off
 
 opt.turnoff.TB  = 0; % 1 = on (no TB formulation used)
 
+opt.pKalpha = 1;
+
+
 % read in GOMECC data and put into obs structure
 for i = 1:nD
     
@@ -33,21 +35,23 @@ for i = 1:nD
     obs(i).esal  = 0.001; % 1 new of 1/23 old = 0.002
     % nutrients P and Si also independent of (T,P)
     obs(i).TP    = in(7,i);
-    obs(i).eTP   = in(7,i)*0.001; % 0.1% meas uncertainty
+    obs(i).eTP   = in(7,i)*0.003; % 0.30% meas precision NEW 4/17/24
     obs(i).TSi   = in(8,i);
-    obs(i).eTSi  = in(8,i)*0.02; % 2% meas uncertainty NEW 1/25/24
+    obs(i).eTSi  = in(8,i)*0.0031; % 0.31% meas uncertainty NEW 4/17/24
 
     % first (T,P)-dependent measurement
     obs(i).tp(1).T  = in(2,i); % deg C, CTD temp
     obs(i).tp(1).eT = 0.02; % ±0.02 degC
     obs(i).tp(1).P  = in(3,i); % dbar
     obs(i).tp(1).eP = 0.63; % (max) ± 0.63 dbar
+    % obs(i).tp(1).pKalpha = 4.38;
+    % obs(i).tp(1).epKalpha = 0.5;
 
     % second(T,P)-dependent measurement
     obs(i).tp(2).T    = 25 ; % degC
     obs(i).tp(2).eT   = 0.05 ; % from cruise report
     obs(i).tp(2).P    = 0.0 ; %in(i+ad,1); % NOT in situ
-    obs(i).tp(2).eP   = 0.63 ;
+    obs(i).tp(2).eP   = 0.07 ;
     obs(i).tp(2).ph   = in(9,i); % total scale
     obs(i).tp(2).eph  = 0.0004 ;
     obs(i).tp(2).co3  = in(11,i); % (µmol/kg)
@@ -57,7 +61,7 @@ for i = 1:nD
     obs(i).tp(3).T     = 20 ; %degC
     obs(i).tp(3).eT    = 0.03 ; % from cruise report
     obs(i).tp(3).P     = 0.0 ; % dbar (surface pressure for pco2)
-    obs(i).tp(3).eP    = 0.63 ;
+    obs(i).tp(3).eP    = 0.07 ;
     obs(i).tp(3).pco2  = in(10,i); % (µatm)
     obs(i).tp(3).epco2 = in(10,i)*0.0021; % 0.21% relative std error (avg)
 end

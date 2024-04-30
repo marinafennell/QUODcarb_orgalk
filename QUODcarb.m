@@ -104,8 +104,8 @@ function [est,obs,sys,iflag] = QUODcarb(obs,opt) % ORG alk
 
 
     opt = check_opt(opt);                   % check opt structure
-
-    sys = mksys(obs(1),opt.phscale);        % create indexing
+    sys = mksys(obs(1),opt.phscale,opt.pKalpha,opt.pKbeta);
+                                            % mksys creates indexing 
     nD  = length(obs);  
     nv  = size(sys.K,2);
 
@@ -120,13 +120,15 @@ function [est,obs,sys,iflag] = QUODcarb(obs,opt) % ORG alk
         % negative of the log of the posterior 
         % aka the log improbability (limp for short)
         fun = @(z) limp(z,yobs(i,:),wobs(i,:),obs(i),sys,opt);
-
+        
         % find the maximum of the posterior probability 
         [zhat,J,iflag(i)] = newtn(z0,fun,tol);
         if (iflag(i) ~=0) && (opt.printmes ~= 0)
             fprintf('Newton''s method iflag = %i at i = %i \n',iflag(i),i);
         end
-
+        [~,~,f] = limp(zhat,yobs(i,:),wobs(i,:),obs(i),sys,opt);
+        % residual f value, to tack onto est
+        % keyboard
         % calculate the marginalized posterior uncertainty using Laplace's approximation
         C = inv(J);
         C = C(1:nv,1:nv);
@@ -197,7 +199,7 @@ function [g,H,f] = limp(z,y,w,obs,sys,opt)
     nrk     = size(K,1);
     nTP     = length(sys.tp); 
     nv      = size(M,2);
-    x       = z(1:nv);      % measured variables
+    x       = z(1:nv);      % measured variables (measurable vars???)
 
     % fill ypK, gypK, ggypK, and with associated calculated pK, gpK, and ggpK values
     % update the pK values based on the new estimate of (T,P)
@@ -229,7 +231,6 @@ function [g,H,f] = limp(z,y,w,obs,sys,opt)
     dcdx = [ M * diag( sys.dqdx( x ) ); ...
              K  ];
  
-    %iTSP = [[sys.tp(:).iT], sys.isal, [sys.tp(:).iP]];
     g    = [ e.' * W * ge + lam.' * dcdx,  c.' ];
 
     ddq     =  diag( sys.d2qdx2( x ) ); % q"
@@ -247,7 +248,7 @@ function [g,H,f] = limp(z,y,w,obs,sys,opt)
     H   = [  ge.'*W*ge-tmp+gg,  dcdx.'    ; ... % derivatives wrt lambdas
              dcdx            ,  zeros(nlam)  ]; % derivatives wrt var's
     g = g(:); % make sure g is returned as a column vector
-    % keyboard
+    keyboard
 end
 
 % -----------------------------------------------------------------------------------
@@ -351,9 +352,19 @@ function [opt] = check_opt(opt)
             fprintf('No opt.Revelle chosen. Assuming opt.Revelle = 0 (off). \n');
         end
     end
-    % opt.turnoff totals
+    % opt.turnoff totals (only got TB to work)
     if ~isfield(opt.turnoff,'TB') || isbad(opt.turnoff.TB)
         opt.turnoff.TB = 0; % default = not turned off
+    end
+    if ~isfield(opt.turnoff,'pK1') || isbad(opt.turnoff.pK1)
+        opt.turnoff.pK1 = 0; % default = not turned off
+    end
+    % organic alkalinity
+    if ~isfield(opt,'pKalpha') || isbad(opt.pKalpha)
+        opt.pKalpha = 0; % off
+    end
+    if ~isfield(opt,'pKbeta') || isbad(opt.pKbeta)
+        opt.pKbeta = 0; % off
     end
 end
 
@@ -419,9 +430,11 @@ function [y,gy,ggy] = update_y(y,x,obs,sys,opt)
             ggy(sys.tp(i).ipK0,iTSP,iTSP) = ggpK(1,:,:);
         end
         if (isnan(obs.tp(i).pK1))
-            y(sys.tp(i).ipK1)             = pK(2);
-            gy(sys.tp(i).ipK1,iTSP)       = gpK(2,:);
-            ggy(sys.tp(i).ipK1,iTSP,iTSP) = ggpK(2,:,:);
+            if opt.turnoff.pK1 ~= 1
+                y(sys.tp(i).ipK1)             = pK(2);
+                gy(sys.tp(i).ipK1,iTSP)       = gpK(2,:);
+                ggy(sys.tp(i).ipK1,iTSP,iTSP) = ggpK(2,:,:);
+            end
         end
         if (isnan(obs.tp(i).pK2))
             y(sys.tp(i).ipK2)             = pK(3);
@@ -487,6 +500,8 @@ function [y,gy,ggy] = update_y(y,x,obs,sys,opt)
             y(sys.tp(i).ipKar)             = pK(15);
             gy(sys.tp(i).ipKar,iTSP)       = gpK(15,:);
             ggy(sys.tp(i).ipKar,iTSP,iTSP) = ggpK(15,:,:);
+        end
+        if (isnan(obs.tp(i).pKca))
             y(sys.tp(i).ipKca)             = pK(16);
             gy(sys.tp(i).ipKca,iTSP)       = gpK(16,:);
             ggy(sys.tp(i).ipKca,iTSP,iTSP) = ggpK(16,:,:);
@@ -511,8 +526,9 @@ function z0 = init(opt,yobs,sys)
         alk         = 2200e-6;
         y0(sys.ipTA) = p(alk);
     end
-     % calculate totals
-    [pT,~,~,~] = calc_pTOT(opt,yobs(sys.isal));
+    % calculate totals
+    S = yobs(sys.isal);
+    [pT,~,~,~] = calc_pTOT(opt,S);
     pTB  = pT(1);
 
     % calculate tp-independent vars
@@ -547,11 +563,31 @@ function z0 = init(opt,yobs,sys)
     TCa = q(yobs(sys.ipTCa));
     y0(sys.ipTCa) = p(TCa);
 
+    if opt.pKalpha == 1
+        TAlpha = 1e-6; % 1 umol/kg ?
+        y0(sys.ipTAlpha) = p(TAlpha);
+    end
+    if opt.pKbeta == 1
+        TBeta = 1e-6; % 1 umol/kg ?
+        y0(sys.ipTBeta) = p(TBeta);
+    end
+
     nTP = length(sys.tp);
     for i = 1:nTP
+        % calculate pK1
+        T = y0(sys.tp(i).iT); P = y0(sys.tp(i).iP);
+        [pK,~,~] = calc_pK(opt,T,S,P);
+        if opt.turnoff.pK1 == 1
+            pK1 = pK(2);
+            K1 = q(pK1);
+            y0(sys.tp(i).ipK1) = pK1;
+        else
+            K1      = q(y0(sys.tp(i).ipK1));
+        end
+
         % solve for the [H+] using only the carbonate alkalinity
         K0      = q(y0(sys.tp(i).ipK0));
-        K1      = q(y0(sys.tp(i).ipK1));
+        % K1      = q(y0(sys.tp(i).ipK1));
         K2      = q(y0(sys.tp(i).ipK2));
         h       = 0.5*( ( gam - 1 ) * K1 + ( ( 1 - gam )^2 * ...
                                              K1^2 - 4 * K1 * K2 * ( 1 - 2 * gam ) ).^0.5 ) ;
@@ -640,6 +676,19 @@ function z0 = init(opt,yobs,sys)
         fH      = q(y0(sys.tp(i).ipfH));
         h_nbs   = h_free*fH;
         y0(sys.tp(i).iph_nbs)   = p(h_nbs);
+
+        if opt.pKalpha == 1
+            alpha = 0.5e-6; % 0.5 umol/kg ?
+            halpha = 0.5e-6;
+            y0(sys.tp(i).ipalpha) = p(alpha);
+            y0(sys.tp(i).iphalpha) = p(halpha);
+        end
+        if opt.pKbeta == 1
+            beta = 0.5e-6; % 0.5 umol/kg ?
+            hbeta = 0.5e-6;
+            y0(sys.tp(i).ipbeta) = p(beta);
+            y0(sys.tp(i).iphbeta) = p(hbeta);
+        end
     end
     nlam    = size(sys.M,1) + size(sys.K,1);
     lam     = zeros(nlam,1);
@@ -648,7 +697,7 @@ end
 
 % ------------------------------------------------------------------------
 
-function [est] = parse_output(z,sigx,sys,f)
+function [est] = parse_output(z,sigx,sys,f) % ORG ALK
     % populate est, output structure with best estimates
     %
     % INPUT:
@@ -753,6 +802,19 @@ function [est] = parse_output(z,sigx,sys,f)
     est.eTCa_l     = ebar_l(sys.ipTCa)*1e6; 
     est.eTCa_u     = ebar_u(sys.ipTCa)*1e6;
     
+    if (isfield(sys,'ipTAlpha'))
+        est.pTAlpha     = z(sys.ipTAlpha);
+        est.epTAlpha    = sigx(sys.ipTAlpha);
+        est.TAlpha      = q(z(sys.ipTAlpha))*1e6;
+        est.eTAlpha     = ebar(sys.ipTAlpha)*1e6;
+    end
+    if (isfield(sys,'ipTBeta'))
+        est.pTBeta      = z(sys.ipTBeta);
+        est.epTBeta     = sigx(sys.ipTBeta);
+        est.TBeta       = q(z(sys.ipTBeta))*1e6;
+        est.eTBeta      = ebar(sys.ipTBeta)*1e6;
+    end
+
     nTP = length(sys.tp);
     for i = 1:nTP
         % temp (deg C)
@@ -1140,6 +1202,39 @@ function [est] = parse_output(z,sigx,sys,f)
         est.tp(i).eKca      = ebar(sys.tp(i).ipKca);
         est.tp(i).eKca_l    = ebar_l(sys.tp(i).ipKca);
         est.tp(i).eKca_u    = ebar_u(sys.tp(i).ipKca);
+
+        if (isfield(sys,'ipTAlpha'))
+            % pKalpha
+            est.tp(i).pKalpha   = z(sys.tp(i).ipKalpha);
+            est.tp(i).epKalpha  = sigx(sys.tp(i).ipKalpha);
+            % alpha
+            est.tp(i).palpha    = z(sys.tp(i).ipalpha);
+            est.tp(i).epalpha   = sigx(sys.tp(i).ipalpha);
+            est.tp(i).alpha     = q(z(sys.tp(i).ipalpha))*1e6;
+            est.tp(i).ealpha    = ebar(sys.tp(i).ipalpha)*1e6;
+            % halpha
+            est.tp(i).phalpha   = z(sys.tp(i).iphalpha);
+            est.tp(i).ephalpha  = sigx(sys.tp(i).iphalpha);
+            est.tp(i).halpha    = q(z(sys.tp(i).iphalpha))*1e6;
+            est.tp(i).ehalpha   = ebar(sys.tp(i).iphalpha)*1e6;
+        end
+
+        if (isfield(sys,'ipTBeta'))
+            % pKbeta
+            est.tp(i).pKbeta = z(sys.tp(i).ipKbeta);
+            est.tp(i).epKbeta = sigx(sys.tp(i).ipKbeta);
+            % beta
+            est.tp(i).pbeta = z(sys.tp(i).ipbeta);
+            est.tp(i).epbeta = sigx(sys.tp(i).ipbeta);
+            est.tp(i).beta = q(z(sys.tp(i).ipbeta))*1e6;
+            est.tp(i).ebeta = ebar(sys.tp(i).ipbeta)*1e6;
+            % hbeta
+            est.tp(i).phbeta = z(sys.tp(i).iphbeta);
+            est.tp(i).ephbeta = sigx(sys.tp(i).iphbeta);
+            est.tp(i).hbeta = q(z(sys.tp(i).iphbeta))*1e6;
+            est.tp(i).ehbeta = ebar(sys.tp(i).iphbeta)*1e6;
+        end
+
     end
 end
 

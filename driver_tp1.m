@@ -22,7 +22,7 @@ opt.turnoff.TB  = 0; % 1 = on (no TB formulation used)
 opt.turnoff.pK1 = 0;
 opt.pKalpha = 1;
 
-load output_mat_files/K16/est09; % calculated pCO2 at 25C
+% load output_mat_files/K16/est09; % calculated pCO2 at 25C
 % for FP
 % obs(1).tp(1).pco2 = 363.1889;
 % obs(1).tp(1).epco2 = 0.0021*obs(1).tp(1).pco2;
@@ -60,8 +60,8 @@ for i = 1:nD
     obs(i).tp(1).co3  = in(11,i); % (µmol/kg)
     obs(i).tp(1).eco3 = in(11,i)*0.02; % 2% from Jon Sharp NEW 1/25/24
 
-    obs(i).tp(1).pco2 = est09(i).tp(2).pco2;
-    obs(i).tp(1).epco2 = est09(i).tp(2).epco2;
+    % obs(i).tp(1).pco2 = est09(i).tp(2).pco2;
+    % obs(i).tp(1).epco2 = est09(i).tp(2).epco2;
 end
 
 [est,obs,sys,iflag] = QUODcarb(obs,opt);

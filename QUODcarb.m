@@ -110,7 +110,7 @@ function [est,obs,sys,iflag] = QUODcarb(obs,opt) % ORG alk
     nv  = size(sys.K,2);
 
     % populate obs, yobs, wobs at each datapoint
-    [obs,yobs,wobs] = parse_input(obs,sys,opt,nD);
+    [obs,yobs,wobs,sys] = parse_input(obs,sys,opt,nD);
 
     for i = 1:nD % loop over the full data set
 
@@ -199,7 +199,7 @@ function [g,H,f] = limp(z,y,w,obs,sys,opt)
     nrk     = size(K,1);
     nTP     = length(sys.tp); 
     nv      = size(M,2);
-    x       = z(1:nv);      % measured variables (measurable vars???)
+    x       = z(1:nv);      % thermodynamic system state, PP*x is modeled measured vars
 
     % fill ypK, gypK, ggypK, and with associated calculated pK, gpK, and ggpK values
     % update the pK values based on the new estimate of (T,P)
@@ -564,11 +564,11 @@ function z0 = init(opt,yobs,sys)
     y0(sys.ipTCa) = p(TCa);
 
     if opt.pKalpha == 1
-        TAlpha = 1e-6; % 1 umol/kg ?
+        TAlpha = 5e-6; % 5 umol/kg ?
         y0(sys.ipTAlpha) = p(TAlpha);
     end
     if opt.pKbeta == 1
-        TBeta = 1e-6; % 1 umol/kg ?
+        TBeta = 5e-6; % 5 umol/kg ?
         y0(sys.ipTBeta) = p(TBeta);
     end
 
@@ -678,10 +678,10 @@ function z0 = init(opt,yobs,sys)
         y0(sys.tp(i).iph_nbs)   = p(h_nbs);
 
         if opt.pKalpha == 1
-            % alpha = 0.5e-6; % 0.5 umol/kg ?
+            alpha = 1e-6; % 1 umol/kg ?
             % halpha = 0.5e-6;
-            halpha = 1e-6;
-            % y0(sys.tp(i).ipalpha) = p(alpha);
+            halpha = 3e-6; % 4 umol/kg?
+            y0(sys.tp(i).ipalpha) = p(alpha);
             y0(sys.tp(i).iphalpha) = p(halpha);
         end
         if opt.pKbeta == 1
@@ -1209,10 +1209,10 @@ function [est] = parse_output(z,sigx,sys,f) % ORG ALK
             est.tp(i).pKalpha   = z(sys.tp(i).ipKalpha);
             est.tp(i).epKalpha  = sigx(sys.tp(i).ipKalpha);
             % alpha
-            % est.tp(i).palpha    = z(sys.tp(i).ipalpha);
-            % est.tp(i).epalpha   = sigx(sys.tp(i).ipalpha);
-            % est.tp(i).alpha     = q(z(sys.tp(i).ipalpha))*1e6;
-            % est.tp(i).ealpha    = ebar(sys.tp(i).ipalpha)*1e6;
+            est.tp(i).palpha    = z(sys.tp(i).ipalpha);
+            est.tp(i).epalpha   = sigx(sys.tp(i).ipalpha);
+            est.tp(i).alpha     = q(z(sys.tp(i).ipalpha))*1e6;
+            est.tp(i).ealpha    = ebar(sys.tp(i).ipalpha)*1e6;
             % halpha
             est.tp(i).phalpha   = z(sys.tp(i).iphalpha);
             est.tp(i).ephalpha  = sigx(sys.tp(i).iphalpha);

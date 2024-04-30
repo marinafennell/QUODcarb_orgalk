@@ -1,4 +1,4 @@
-function [obs,yobs,wobs] = parse_input(obs,sys,opt,nD)
+function [obs,yobs,wobs,sys] = parse_input(obs,sys,opt,nD)
     % ORG ALK
     isgood  = @(thing) (~isempty(thing) & ~sum(isnan(thing)));
     p       = sys.p;
@@ -233,8 +233,8 @@ function [obs,yobs,wobs] = parse_input(obs,sys,opt,nD)
         if opt.pKalpha == 1
             % Organic Alkalinity Alpha
             if (~isfield(obs(i), 'TAlpha')) || (~isgood(obs(i).TAlpha))
-                obs(i).TAlpha           = nan;
-                yobs(i,sys.ipTAlpha)    = nan; % we don't know pTAlpha
+                obs(i).TAlpha           = 5; % guess 5 umol/kg
+                yobs(i,sys.ipTAlpha)    = p(5e-6); 
             else
                 if ((obs(i).TAlpha) == 0)
                     obs(i).TAlpha       = 1e-9;
@@ -242,8 +242,8 @@ function [obs,yobs,wobs] = parse_input(obs,sys,opt,nD)
                 yobs(i,sys.ipTAlpha)    = p(obs(i).TAlpha);
             end
             if (~isfield(obs(i), 'eTAlpha')) || (~isgood(obs(i).eTAlpha))
-                obs(i).eTAlpha          = nan;
-                wobs(i,sys.ipTAlpha)    = nan;
+                obs(i).eTAlpha          = 2; % 5 ± 2 umol/kg
+                wobs(i,sys.ipTAlpha)    = w(obs(i).TAlpha,obs(i).eTAlpha);
             else
                 wobs(i,sys.ipTAlpha)    = w(obs(i).TAlpha,obs(i).eTAlpha);
             end
@@ -888,8 +888,8 @@ function [obs,yobs,wobs] = parse_input(obs,sys,opt,nD)
 
             if opt.pKalpha == 1
                 % pKalpha system
+                pKalpha = 4.8; % default
                 if (~isfield(obs(i).tp(j),'pKalpha')) || (~isgood(obs(i).tp(j).pKalpha))
-                    pKalpha     = 4.8; % default
                     obs(i).tp(j).pKalpha        = nan;
                     yobs(i,sys.tp(j).ipKalpha)  = pKalpha; 
                 else
@@ -897,22 +897,24 @@ function [obs,yobs,wobs] = parse_input(obs,sys,opt,nD)
                     yobs(i,sys.tp(j).ipKalpha)  = obs(i).tp(j).pKalpha;
                 end
                 if (~isfield(obs(i).tp(j),'epKalpha')) || (~isgood(obs(i).tp(j).epKalpha))
-                    pKalpha     = 4.8; % default
+                    % Kalpha     = q(4.8); % default
+                    % pKalpha    = (4.0); % default
                     obs(i).tp(j).epKalpha       = nan;
-                    wobs(i,sys.tp(j).ipKalpha)  = (0.10*pKalpha)^(-2);
+                    % wobs(i,sys.tp(j).ipKalpha)  = w(Kalpha,0.10*Kalpha); % 10%
+                    wobs(i,sys.tp(j).ipKalpha)  = (0.1*pKalpha)^(-2);
                 else
                     wobs(i,sys.tp(j).ipKalpha)  = (obs(i).tp(j).pKalpha)^(-2);
                 end
-                % if (pKalpha > 4.5) % > from Kerr, < from Humphreys
-                %     sys.M(sys.tp(j).row_alk, sys.tp(j).ipalpha) = 0;
-                % else
-                %     sys.M(sys.tp(j).row_alk, sys.tp(j).iphalpha) = 0;
-                % end
+                if (pKalpha > 4.5) % > from Kerr, < from Humphreys
+                    sys.M(sys.tp(j).row_alk, sys.tp(j).ipalpha) = 0;
+                else
+                    sys.M(sys.tp(j).row_alk, sys.tp(j).iphalpha) = 0;
+                end
                 % other unknowns in system
-                % obs(i).tp(j).palpha         = nan; % p(alpha)
-                % yobs(i,sys.tp(j).ipalpha)   = nan;
-                % obs(i).tp(j).epalpha        = nan;
-                % wobs(i,sys.tp(j).ipalpha)   = nan;
+                obs(i).tp(j).palpha         = nan; % p(alpha)
+                yobs(i,sys.tp(j).ipalpha)   = nan;
+                obs(i).tp(j).epalpha        = nan;
+                wobs(i,sys.tp(j).ipalpha)   = nan;
                 obs(i).tp(j).phalpha        = nan; % p(H-alpha)
                 yobs(i,sys.tp(j).iphalpha)  = nan;
                 obs(i).tp(j).ephalpha       = nan;

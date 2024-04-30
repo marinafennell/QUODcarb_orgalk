@@ -204,7 +204,7 @@ function [g,H,f] = limp(z,y,w,obs,sys,opt)
     % fill ypK, gypK, ggypK, and with associated calculated pK, gpK, and ggpK values
     % update the pK values based on the new estimate of (T,P)
     [y, gy, ggy ] = update_y(y,x,obs,sys,opt);
-    
+    % keyboard
     % Make a vector of measured quantities    
     id  = find(~isnan(y));
     y   = y(id).';
@@ -248,7 +248,7 @@ function [g,H,f] = limp(z,y,w,obs,sys,opt)
     H   = [  ge.'*W*ge-tmp+gg,  dcdx.'    ; ... % derivatives wrt lambdas
              dcdx            ,  zeros(nlam)  ]; % derivatives wrt var's
     g = g(:); % make sure g is returned as a column vector
-    keyboard
+    % keyboard
 end
 
 % -----------------------------------------------------------------------------------
@@ -678,9 +678,10 @@ function z0 = init(opt,yobs,sys)
         y0(sys.tp(i).iph_nbs)   = p(h_nbs);
 
         if opt.pKalpha == 1
-            alpha = 0.5e-6; % 0.5 umol/kg ?
-            halpha = 0.5e-6;
-            y0(sys.tp(i).ipalpha) = p(alpha);
+            % alpha = 0.5e-6; % 0.5 umol/kg ?
+            % halpha = 0.5e-6;
+            halpha = 1e-6;
+            % y0(sys.tp(i).ipalpha) = p(alpha);
             y0(sys.tp(i).iphalpha) = p(halpha);
         end
         if opt.pKbeta == 1
@@ -1208,10 +1209,10 @@ function [est] = parse_output(z,sigx,sys,f) % ORG ALK
             est.tp(i).pKalpha   = z(sys.tp(i).ipKalpha);
             est.tp(i).epKalpha  = sigx(sys.tp(i).ipKalpha);
             % alpha
-            est.tp(i).palpha    = z(sys.tp(i).ipalpha);
-            est.tp(i).epalpha   = sigx(sys.tp(i).ipalpha);
-            est.tp(i).alpha     = q(z(sys.tp(i).ipalpha))*1e6;
-            est.tp(i).ealpha    = ebar(sys.tp(i).ipalpha)*1e6;
+            % est.tp(i).palpha    = z(sys.tp(i).ipalpha);
+            % est.tp(i).epalpha   = sigx(sys.tp(i).ipalpha);
+            % est.tp(i).alpha     = q(z(sys.tp(i).ipalpha))*1e6;
+            % est.tp(i).ealpha    = ebar(sys.tp(i).ipalpha)*1e6;
             % halpha
             est.tp(i).phalpha   = z(sys.tp(i).iphalpha);
             est.tp(i).ephalpha  = sigx(sys.tp(i).iphalpha);

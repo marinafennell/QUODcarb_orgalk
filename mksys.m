@@ -176,7 +176,7 @@ function sys = mksys(obs,phscale,optpKalpha,optpKbeta) % ORG ALK
             % Kalpha = [alpha][H]/[Halpha] unknown alkalinity
             nrk = nrk + 1;          i = i + 1;
             tp(j).ipKalpha = i;     i = i + 1; % K(alpha)
-            tp(j).ipalpha  = i;     i = i + 1; % p(alpha)
+            % tp(j).ipalpha  = i;     % i = i + 1; % p(alpha)
             tp(j).iphalpha = i;                % H-alpha
         end
 
@@ -321,8 +321,10 @@ function sys = mksys(obs,phscale,optpKalpha,optpKbeta) % ORG ALK
         if optpKalpha == 1
             % Kalpha = [alpha][H]/[Halpha] -> -pKalpha + palpha + pH - pHalpha = 0
             row = row + 1;
-            K(row, [tp(j).ipKalpha, tp(j).ipalpha, tp(j).iph, tp(j).iphalpha]) = [-1, 1, 1, -1];
-            kc = union(kc,[ tp(j).ipKalpha, tp(j).ipalpha, tp(j).iph, tp(j).iphalpha]);
+            % K(row, [tp(j).ipKalpha, tp(j).ipalpha, tp(j).iph, tp(j).iphalpha]) = [-1, 1, 1, -1];
+            % kc = union(kc,[ tp(j).ipKalpha, tp(j).ipalpha, tp(j).iph, tp(j).iphalpha]);
+            K(row, [tp(j).ipKalpha, tp(j).iph, tp(j).iphalpha]) = [-1, 1, -1];
+            kc = union(kc,[ tp(j).ipKalpha, tp(j).iph, tp(j).iphalpha]);
             kr = [kr, row];
             nr = nr + 1;
         end
@@ -456,8 +458,10 @@ function sys = mksys(obs,phscale,optpKalpha,optpKbeta) % ORG ALK
         if optpKalpha == 1
             % Kalpha = [alpha][H]/[Halpha] unknown alkalinity TAlpha
             row = row + 1;
-            M(row,[ ipTAlpha, tp(j).ipalpha, tp(j).iphalpha]) = [1, -1, -1];
-            mc = union(mc, [ipTAlpha, tp(j).ipalpha, tp(j).iphalpha]);
+            % M(row,[ ipTAlpha, tp(j).ipalpha, tp(j).iphalpha]) = [1, -1, -1];
+            % mc = union(mc, [ipTAlpha, tp(j).ipalpha, tp(j).iphalpha]);
+            M(row,[ ipTAlpha, tp(j).iphalpha]) = [1, -1];
+            mc = union(mc, [ipTAlpha, tp(j).iphalpha]);
             mr = [mr,row];
             % M(row_alk, [tp(j).ipalpha,tp(j).iphalpha] ) = [1, -1]; % or -, +?
             M(row_alk, tp(j).iphalpha ) = -1; 

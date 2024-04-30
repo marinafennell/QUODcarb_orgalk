@@ -909,10 +909,10 @@ function [obs,yobs,wobs] = parse_input(obs,sys,opt,nD)
                 %     sys.M(sys.tp(j).row_alk, sys.tp(j).iphalpha) = 0;
                 % end
                 % other unknowns in system
-                obs(i).tp(j).palpha         = nan; % p(alpha)
-                yobs(i,sys.tp(j).ipalpha)   = nan;
-                obs(i).tp(j).epalpha        = nan;
-                wobs(i,sys.tp(j).ipalpha)   = nan;
+                % obs(i).tp(j).palpha         = nan; % p(alpha)
+                % yobs(i,sys.tp(j).ipalpha)   = nan;
+                % obs(i).tp(j).epalpha        = nan;
+                % wobs(i,sys.tp(j).ipalpha)   = nan;
                 obs(i).tp(j).phalpha        = nan; % p(H-alpha)
                 yobs(i,sys.tp(j).iphalpha)  = nan;
                 obs(i).tp(j).ephalpha       = nan;

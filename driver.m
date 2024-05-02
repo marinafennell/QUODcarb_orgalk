@@ -3,7 +3,11 @@
 
 load data.mat; % NEW as of Nov.11
 [in] = data;
-nD = 5; %length(in);
+nD = length(in);
+
+[sobs] = in(1,:); % PSU
+[tobs] = in(2,:); % degC
+[pobs] = in(3,:); % dbar
 
 % choose options for opt structure
 opt.K1K2 = 16; % option for K1K2 formulation
@@ -19,13 +23,22 @@ opt.Revelle  = 0; % 1 = on, 0 = off
 opt.printmes = 0; % 1 = on, 0 = off
 
 opt.turnoff.TB  = 0; % 1 = on (no TB formulation used)
-
-opt.pKalpha = 1;
-
+opt.turnoff.pK1 = 0;
+opt.pKalpha     = 0;
+opt.pKbeta      = 0;
 
 % read in GOMECC data and put into obs structure
 for i = 1:nD
-    
+    obs(i).TAlpha           = 1;
+    obs(i).eTAlpha          = 0.2;
+    obs(i).tp(1).pKalpha    = 4.1;
+    obs(i).tp(1).epKalpha   = 0.5;
+
+    obs(i).TBeta           = 1;
+    obs(i).eTBeta          = 0.2;
+    obs(i).tp(1).pKbeta    = 7;
+    obs(i).tp(1).epKbeta   = 0.5;
+
     % measurements that are independent of (T,P)
     obs(i).TC    = in(5,i); % (umol/kg)
     obs(i).eTC   = 2.01;    % TC error ±2.01 umol/kg
@@ -40,80 +53,88 @@ for i = 1:nD
     obs(i).eTSi  = in(8,i)*0.0031; % 0.31% meas uncertainty NEW 4/17/24
 
     % first (T,P)-dependent measurement
-    obs(i).tp(1).T  = in(2,i); % deg C, CTD temp
-    obs(i).tp(1).eT = 0.02; % ±0.02 degC
-    obs(i).tp(1).P  = in(3,i); % dbar
-    obs(i).tp(1).eP = 0.63; % (max) ± 0.63 dbar
+    % obs(i).tp(1).T  = in(2,i); % deg C, CTD temp
+    % obs(i).tp(1).eT = 0.02; % ±0.02 degC
+    % obs(i).tp(1).P  = in(3,i); % dbar
+    % obs(i).tp(1).eP = 0.63; % (max) ± 0.63 dbar
     % obs(i).tp(1).pKalpha = 4.38;
     % obs(i).tp(1).epKalpha = 0.5;
 
     % second(T,P)-dependent measurement
-    obs(i).tp(2).T    = 25 ; % degC
-    obs(i).tp(2).eT   = 0.05 ; % from cruise report
-    obs(i).tp(2).P    = 0.0 ; %in(i+ad,1); % NOT in situ
-    obs(i).tp(2).eP   = 0.07 ;
-    obs(i).tp(2).ph   = in(9,i); % total scale
-    obs(i).tp(2).eph  = 0.0004 ;
-    obs(i).tp(2).co3  = in(11,i); % (µmol/kg)
-    obs(i).tp(2).eco3 = in(11,i)*0.02; % 2% from Jon Sharp NEW 1/25/24
+    obs(i).tp(1).T    = 25 ; % degC
+    obs(i).tp(1).eT   = 0.05 ; % from cruise report
+    obs(i).tp(1).P    = 0.0 ; %in(i+ad,1); % NOT in situ
+    obs(i).tp(1).eP   = 0.07 ;
+    obs(i).tp(1).ph   = in(9,i); % total scale
+    obs(i).tp(1).eph  = 0.0004 ;
+    obs(i).tp(1).co3  = in(11,i); % (µmol/kg)
+    obs(i).tp(1).eco3 = in(11,i)*0.02; % 2% from Jon Sharp NEW 1/25/24
 
     % third (T,P)-dependent measurement
-    obs(i).tp(3).T     = 20 ; %degC
-    obs(i).tp(3).eT    = 0.03 ; % from cruise report
-    obs(i).tp(3).P     = 0.0 ; % dbar (surface pressure for pco2)
-    obs(i).tp(3).eP    = 0.07 ;
-    obs(i).tp(3).pco2  = in(10,i); % (µatm)
-    obs(i).tp(3).epco2 = in(10,i)*0.0021; % 0.21% relative std error (avg)
+    obs(i).tp(2).T     = 20 ; %degC
+    obs(i).tp(2).eT    = 0.03 ; % from cruise report
+    obs(i).tp(2).P     = 0.0 ; % dbar (surface pressure for pco2)
+    obs(i).tp(2).eP    = 0.07 ;
+    obs(i).tp(2).pco2  = in(10,i); % (µatm)
+    obs(i).tp(2).epco2 = in(10,i)*0.0021; % 0.21% relative std error (avg)
 end
 
 obs_backup = obs;
-
-%% Q5: All five input
-% CT AT pH pCO2 CO3 (Q5) (fid5)
 [est,obs,sys,iflag] = QUODcarb(obs,opt);
 
+for i = 1:nD
+    dTC(i) = obs(i).TC - est(i).TC;
+    zscore(i,1) = dTC(i)/2.01;
+
+    dTA(i) = obs(i).TA - est(i).TA;
+    zscore(i,2) = dTA(i)/1.78;
+
+    dph(i) = obs(i).tp(1).ph - est(i).tp(1).ph;
+    zscore(i,3) = dph(i)/0.0004;
+
+    dpco2(i) = obs(i).tp(2).pco2 - est(i).tp(2).pco2;
+    zscore(i,4) = dpco2(i)/obs(i).tp(2).epco2;
+
+    dco3(i) = obs(i).tp(1).co3 - est(i).tp(1).co3;
+    zscore(i,5) = dco3(i)/obs(i).tp(1).eco3;
+
+    % Talpha(i) = est(i).TAlpha;
+    % pKalpha(i) = est(i).tp(1).pKalpha;
+    % alpha(i) = est(i).tp(1).alpha;
+    % halpha(i) = est(i).tp(1).halpha;
+    % 
+    % Tbeta(i) = est(i).TBeta;
+    % pKbeta(i) = est(i).tp(1).pKbeta;
+    % beta(i) = est(i).tp(1).beta;
+    % hbeta(i) = est(i).tp(1).hbeta;
+end
+
+fprintf('\n')
+fprintf('med zTC = %f, ', median(zscore(:,1)))
+fprintf('med zTA = %f, ', median(zscore(:,2)))
+fprintf('med zpH = %f, ', median(zscore(:,3)))
+fprintf('\n')
+fprintf('med zpCO2 = %f, ', median(zscore(:,4)))
+fprintf('med zCO3 = %f ', median(zscore(:,5)))
+fprintf('\n')
+% fprintf('Talpha = %f, ', median(Talpha))
+% fprintf('pKalpha = %f, ', median(pKalpha))
+% fprintf('\n')
+% fprintf('alpha = %f, ', median(alpha))
+% fprintf('halpha = %f, ', median(halpha))
+% fprintf('\n')
+% fprintf('Tbeta = %f, ', median(Tbeta))
+% fprintf('pKbeta = %f, ', median(pKbeta))
+% fprintf('\n')
+% fprintf('beta = %f, ', median(beta))
+% fprintf('hbeta = %f, ', median(hbeta))
+% fprintf('\n')
 
 
+% Q5: All five input
+% CT AT pH pCO2 CO3 (Q5) (fid5)
+% [est,obs,sys,iflag] = QUODcarb(obs,opt);
 
-% get other stuff from driver_all.m, updated 1/25/24
-
-% 
-% %% Q5: All five input
-% % CT AT pH pCO2 CO3 (Q5) (fid26)
-% obs = obs_backup;
-% [est,~,~,~] = QUODcarb(obs,opt);
-% est26 = est;
-% 
-% %% Q2: Input Pairs
-% 
-% % TC TA (Q2) (fid01)
-% obs = obs_backup;
-% for i = 1:nD
-%     obs(i).tp(2).ph = nan;   obs(i).tp(2).eph = nan;
-%     obs(i).tp(3).pco2 = nan; obs(i).tp(3).epco2 = nan;
-%     obs(i).tp(2).co3 = nan;  obs(i).tp(2).eco3 = nan;
-% end
-% [est,~,~,~] = QUODcarb(obs,opt);
-% est01  = est;
-% % [est,obs,~,~] = QUODcarb(obs,opt); % need obs for compare
-% % fid01   = 'compare_outs/compare_TC_TA.csv'; 
-% % tp     = 2; % second tp system for ph in there
-% % A      = compare(obs,est,opt,tp,1,fid01); % 1 for input pair TC TA
-% 
-% % TC ph (Q2) (fid02)
-% obs = obs_backup;
-% for i = 1:nD
-%     obs(i).TA = nan;         obs(i).eTA = nan;
-%     obs(i).tp(3).pco2 = nan; obs(i).tp(3).epco2 = nan; % tp(3)
-%     obs(i).tp(2).co3 = nan;  obs(i).tp(2).eco3 = nan; % tp(2)
-% end
-% [est,~,~,~] = QUODcarb(obs,opt);
-% est02   = est;
-% % [est,obs, ~, ~] = QUODcarb(obs,opt);
-% % tp      = 2;
-% % fid02   = 'compare_outs/compare_TC_ph.csv';
-% % [A]     = compare(obs,est,opt,tp,2,fid02);
-% 
 % % TC pCO2 (Q2)(fid03)
 % obs = obs_backup;
 % for i = 1:nD
@@ -121,108 +142,10 @@ obs_backup = obs;
 %     obs(i).tp(2).ph = nan;   obs(i).tp(2).eph = nan;
 %     obs(i).tp(2).co3 = nan;  obs(i).tp(2).eco3 = nan;
 % end
-% [est,~,~,~] = QUODcarb(obs,opt);
+% [est,obs,~,~] = QUODcarb(obs,opt);
 % est03   = est;
-% % [est, obs, ~, ~] = QUODcarb(obs,opt);
-% % tp      = 3;
-% % fid03   = 'compare_outs/compare_TC_pco2.csv';
-% % [A]     = compare(obs,est,opt,tp,7,fid03);
-% 
-% % TC CO3 (Q2)(fid04)
-% obs = obs_backup;
-% for i = 1:nD
-%     obs(i).TA = nan;         obs(i).eTA = nan;
-%     obs(i).tp(3).pco2 = nan; obs(i).tp(3).epco2 = nan;
-%     obs(i).tp(2).ph = nan;   obs(i).tp(2).eph = nan;
-% end
-% [est,~,~,~] = QUODcarb(obs,opt);
-% est04   = est;
-% % [est,obs, ~, ~] = QUODcarb(obs,opt);
-% % tp      = 2;
-% % fid04   = 'compare_outs/compare_TC_co3.csv';
-% % [A]     = compare(obs,est,opt,tp,6,fid04);
-% 
-% % TA ph (Q2) (fid05)
-% obs = obs_backup;
-% for i = 1:nD
-%     obs(i).TC = nan;         obs(i).eTC = nan;
-%     obs(i).tp(3).pco2 = nan; obs(i).tp(3).epco2 = nan;
-%     obs(i).tp(2).co3 = nan;  obs(i).tp(2).eco3 = nan;
-% end
-% [est,~,~,~] = QUODcarb(obs,opt);
-% est05   = est;
-% % [est,obs, ~, ~] = QUODcarb(obs,opt);
-% % tp      = 2;
-% % fid05   = 'compare_outs/compare_TA_ph.csv';
-% % [A]     = compare(obs,est,opt,tp,3,fid05);
-% 
-% % TA pCO2 (Q2)(fid06)
-% obs = obs_backup;
-% for i = 1:nD
-%     obs(i).TC = nan;        obs(i).eTC = nan;
-%     obs(i).tp(2).ph = nan;  obs(i).tp(2).eph = nan;
-%     obs(i).tp(2).co3 = nan; obs(i).tp(2).eco3 = nan;
-% end
-% [est,~,~,~] = QUODcarb(obs,opt);
-% est06   = est;
-% % [est, obs, ~, ~] = QUODcarb(obs,opt);
-% % tp      = 3;
-% % fid06   = 'compare_outs/compare_TA_pco2.csv';
-% % [A]     = compare(obs,est,opt,tp,8,fid06);
-% 
-% % TA CO3 (Q2)(fid07)
-% obs = obs_backup;
-% for i = 1:nD
-%     obs(i).TC = nan;          obs(i).eTC = nan;
-%     obs(i).tp(2).ph = nan;    obs(i).tp(2).eph = nan;
-%     obs(i).tp(3).pco2 = nan;  obs(i).tp(3).epco2 = nan;
-% end
-% [est,~,~,~] = QUODcarb(obs,opt);
-% est07   = est;
-% % [est, obs, ~, ~] = QUODcarb(obs,opt);
-% % tp      = 2;
-% % fid07   = 'compare_outs/compare_TA_co3.csv';
-% % [A]     = compare(obs,est,opt,tp,9,fid07);
-% 
-% % % pH CO3 (Q2) (fid08)
-% obs = obs_backup;
-% for i = 1:nD
-%     obs(i).TC = nan;            obs(i).eTC = nan;
-%     obs(i).TA = nan;            obs(i).eTA = nan;
-%     obs(i).tp(3).pco2 = nan;    obs(i).tp(3).epco2 = nan;
-% end
-% [est,~,~,~] = QUODcarb(obs,opt);
-% est08   = est;
-% % [est, obs, ~, ~] = QUODcarb(obs,opt);
-% % tp      = 2;
-% % fid08   = 'compare_outs/compare_ph_CO3.csv';
-% % [A]     = compare(obs,est,opt,tp,10,fid08);
-% 
-% % pH pCO2 (Q2) (fid09)
-% obs = obs_backup;
-% for i = 1:nD
-%     obs(i).TC = nan;        obs(i).eTC = nan;
-%     obs(i).TA = nan;        obs(i).eTA = nan;
-%     obs(i).tp(2).co3 = nan; obs(i).tp(2).eco3 = nan;
-% end
-% [est,~,~,~] = QUODcarb(obs,opt);
-% est09 = est;
-% % % NO compare! Wrong tp's
-% 
-% % pCO2 CO3 (Q2) (fid10)
-% obs = obs_backup;
-% for i = 1:nD
-%     obs(i).TC = nan;        obs(i).eTC = nan;
-%     obs(i).TA = nan;        obs(i).eTA = nan;
-%     obs(i).tp(2).ph = nan;  obs(i).tp(2).eph = nan;
-% end
-% [est,~,~,~] = QUODcarb(obs,opt);
-% est10   = est;
-% % % NO compare! Wrong tp's
-
-
-
-
-
+% tp      = 3;
+% fid03   = 'compare_TC_pco2.csv';
+% [A]     = compare(obs,est,opt,tp,7,fid03);
 
 

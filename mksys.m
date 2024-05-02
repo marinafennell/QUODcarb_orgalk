@@ -1,3 +1,4 @@
+
 function sys = mksys(obs,phscale,optpKalpha,optpKbeta) % ORG ALK
 %
 % Private function for QUODcarb.m
@@ -89,88 +90,92 @@ function sys = mksys(obs,phscale,optpKalpha,optpKbeta) % ORG ALK
         i = i + 1;    iP = i;     tp(j).iP = iP;  % pressure
             
         % K0 = [co2st]/fco2   
-        nrk = 1;              i = i + 1; 
-        tp(j).ipK0      = i;  i = i + 1; 
-        tp(j).ipco2st   = i;  i = i + 1;
-        tp(j).ipfco2    = i;  i = i + 1; % fco2 = pco2 * p2f;
-        tp(j).ipp2f     = i;  i = i + 1;
-        tp(j).ippco2    = i;  
-
         % K1 = [h][hco3]/[co2st]
         % K2 = [h][co3]/[hco3]
-        nrk = nrk + 2;
-        tp(j).ipK1      = i;    i = i + 1;
-        tp(j).ipK2      = i;    i = i + 1;
-        tp(j).iphco3    = i;    i = i + 1;
-        tp(j).ipco3     = i;    i = i + 1;
-        tp(j).iph       = i;    i = i + 1;
-        tp(j).iph_tot   = i;    i = i + 1;
-        tp(j).iph_free  = i;    i = i + 1;
-        tp(j).iph_sws   = i;    i = i + 1;
-        tp(j).iph_nbs   = i;    i = i + 1;
-        tp(j).ipfH      = i; 
+        nrk = 3;              i = i + 1; 
+        tp(j).ipK0      = i;  i = i + 1; 
+        tp(j).ipK1      = i;  i = i + 1;
+        tp(j).ipK2      = i;  i = i + 1;
+        tp(j).ipfco2    = i;  i = i + 1;
+        tp(j).ipco2st   = i;  i = i + 1;
+        tp(j).iphco3    = i;  i = i + 1;
+        tp(j).ipco3     = i;  i = i + 1;
+        tp(j).iph       = i; 
+        
+        % Kb = [h][boh4]/[boh3]
+        nrk = nrk + 1;        i = i + 1;
+        tp(j).ipKb   = i;     i = i + 1;
+        tp(j).ipboh4 = i;     i = i + 1;
+        tp(j).ipboh3 = i;
 
         % Kw = [h][oh] 
-        nrk = nrk + 1;          i = i + 1;
-        tp(j).ipKw = i;         i = i + 1;
-        tp(j).ipoh = i;     
-
-        % Kb = [h][boh4]/[boh3]
-        nrk = nrk + 1;          i = i + 1;
-        tp(j).ipKb   = i;       i = i + 1;
-        tp(j).ipboh3 = i;       i = i + 1;
-        tp(j).ipboh4 = i; 
+        nrk = nrk + 1;       i = i + 1;
+        tp(j).ipKw = i;      i = i + 1;
+        tp(j).ipoh = i;      
      
         % Ks  = [hf][so4]/[hso4]
-        nrk = nrk + 1;          i = i + 1;
-        tp(j).ipKs     = i;     i = i + 1;
-        tp(j).iphso4   = i;     i = i + 1;
-        tp(j).ipso4    = i;
+        nrk = nrk + 1;        i = i + 1;
+        tp(j).ipKs     = i;   i = i + 1;
+        tp(j).ipso4    = i;   i = i + 1;
+        tp(j).iphso4   = i;
         
         % Kf = [h][F]/[HF]
-        nrk = nrk + 1;          i = i + 1;
-        tp(j).ipKf = i;         i = i + 1;
-        tp(j).ipHF = i;         i = i + 1;
-        tp(j).ipF  = i;
-
+        nrk = nrk + 1;        i = i + 1;
+        tp(j).ipKf = i;       i = i + 1;
+        tp(j).ipF  = i;       i = i + 1;
+        tp(j).ipHF = i;
         % Kp1 = [h][h2po4]/[h3po4]
         % Kp2 = [h][hpo4]/[h2po4]
         % Kp3 = [h][po4]/[hpo4]
-        nrk = nrk + 3;          i = i + 1;
-        tp(j).ipKp1   = i;      i = i + 1;
-        tp(j).ipKp2   = i;      i = i + 1;
-        tp(j).ipKp3   = i;      i = i + 1;
-        tp(j).iph3po4 = i;      i = i + 1;
-        tp(j).iph2po4 = i;      i = i + 1;
-        tp(j).iphpo4  = i;      i = i + 1;
+        nrk = nrk + 3;        i = i + 1;
+        tp(j).ipKp1   = i;    i = i + 1;
+        tp(j).ipKp2   = i;    i = i + 1;
+        tp(j).ipKp3   = i;    i = i + 1;
+        tp(j).iph3po4 = i;    i = i + 1;
+        tp(j).iph2po4 = i;    i = i + 1;
+        tp(j).iphpo4  = i;    i = i + 1;
         tp(j).ippo4   = i;
         
         % KSi = [h][siooh3]/[sioh4]
-        nrk = nrk + 1;          i = i + 1;
-        tp(j).ipKsi    = i;     i = i + 1;
-        tp(j).ipsiooh3 = i;     i = i + 1;
+        nrk = nrk + 1;        i = i + 1;
+        tp(j).ipKsi    = i;   i = i + 1;
+        tp(j).ipsiooh3 = i;   i = i + 1;
         tp(j).ipsioh4  = i;
         
         % Knh4 = [h][nh3]/[nh4]
-        nrk = nrk + 1;          i = i + 1;
-        tp(j).ipKnh4 = i;       i = i + 1;
-        tp(j).ipnh4  = i;       i = i + 1;
-        tp(j).ipnh3  = i;
+        nrk = nrk + 1;        i = i + 1;
+        tp(j).ipKnh4 = i;     i = i + 1;
+        tp(j).ipnh3  = i;     i = i + 1;
+        tp(j).ipnh4  = i;
         
         % Kh2s = [h][hs]/[h2s]
-        nrk = nrk + 1;          i = i + 1;
-        tp(j).ipKh2s = i;       i = i + 1;
-        tp(j).ipH2S  = i;       i = i + 1;
-        tp(j).ipHS   = i;    
+        nrk = nrk + 1;        i = i + 1;
+        tp(j).ipKh2s = i;     i = i + 1;
+        tp(j).ipHS   = i;     i = i + 1;
+        tp(j).ipH2S  = i;    
 
+        % fco2 = pco2 * p2f;
+        nrk = nrk + 1;        i = i + 1;
+        tp(j).ipp2f     = i;  i = i + 1;
+        tp(j).ippco2    = i;  
+        
         % Kar = [co3][ca]/OmegaAr
         % Kca = [co3][ca]/OmegaCa
-        nrk = nrk + 2;          i = i + 1;
-        tp(j).ipKar     = i;    i = i + 1;
-        tp(j).ipKca     = i;    i = i + 1;
-        tp(j).ipOmegaAr = i;    i = i + 1;
-        tp(j).ipOmegaCa = i;    i = i + 1;
-        tp(j).ipca      = i; 
+        nrk = nrk + 1;        i = i + 1;
+        tp(j).ipKar     = i;  i = i + 1;
+        tp(j).ipca      = i;  i = i + 1;
+        tp(j).ipOmegaAr = i;
+        nrk = nrk + 1;        i = i + 1;
+        tp(j).ipKca     = i;  i = i + 1;
+        tp(j).ipOmegaCa = i;  i = i+1;
+        tp(j).ipfH      = i; i = i + 1;
+        
+        %  ph scales 
+        tp(j).iph_tot  = i;   i = i + 1;
+        tp(j).iph_free = i;   i = i + 1;
+        tp(j).iph_sws  = i;   i = i + 1;
+        tp(j).iph_nbs  = i;
+        % changing the order in this for loop messes up the code -MF 5/2/24
 
         if optpKalpha == 1
             % Kalpha = [alpha][H]/[Halpha] unknown alkalinity
@@ -213,16 +218,16 @@ function sys = mksys(obs,phscale,optpKalpha,optpKbeta) % ORG ALK
         kc = union(kc,[tp(j).ipK2, tp(j).iph, tp(j).ipco3, tp(j).iphco3]);
         kr = [kr, row];
         
-        % Kb = [H][BOH4]/[BOH3]
-        row = row+1;
-        K(row,[ tp(j).ipKb, tp(j).iph, tp(j).ipboh4, tp(j).ipboh3 ]) = [ -1, 1, 1, -1 ];
-        kc = union(kc,[tp(j).ipKb, tp(j).iph, tp(j).ipboh4, tp(j).ipboh3]);
-        kr = [kr, row];
-
         % Kw = [OH][H]
         row = row + 1;
         K(row,[ tp(j).ipKw, tp(j).iph, tp(j).ipoh ]) = [ -1, 1, 1 ];
         kc = union(kc,[tp(j).ipKw, tp(j).iph, tp(j).ipoh]);
+        kr = [kr, row];
+
+        % Kb = [H][BOH4]/[BOH3]
+        row = row+1;
+        K(row,[ tp(j).ipKb, tp(j).iph, tp(j).ipboh4, tp(j).ipboh3 ]) = [ -1, 1, 1, -1 ];
+        kc = union(kc,[tp(j).ipKb, tp(j).iph, tp(j).ipboh4, tp(j).ipboh3]);
         kr = [kr, row];
 
         % Ks  = [H]free[SO4]/[HSO4] 
@@ -275,7 +280,7 @@ function sys = mksys(obs,phscale,optpKalpha,optpKbeta) % ORG ALK
             
         % fco2 = pco2 * p2f;
         row = row + 1;
-        K(row,[ tp(j).ipfco2, tp(j).ippco2, tp(j).ipp2f ]) = [ -1 1 1 ];
+        K(row,[ tp(j).ipfco2, tp(j).ippco2, tp(j).ipp2f ]) = [ -1, 1, 1 ];
         kc = union(kc,[ tp(j).ipfco2, tp(j).ippco2, tp(j).ipp2f]);
         kr = [kr, row];
           
@@ -353,7 +358,7 @@ function sys = mksys(obs,phscale,optpKalpha,optpKbeta) % ORG ALK
         tp(j).row_alk = row_alk;
         mr = [mr, row];
 
-        % carbonate 
+        % carbonate alkalinity
         M(row_alk,[ ipTA, tp(j).iphco3, tp(j).ipco3]) = [ 1, -1, -2 ];
         mc = union(mc,[ipTA, tp(j).iphco3, tp(j).ipco3]);
         
@@ -462,17 +467,21 @@ function sys = mksys(obs,phscale,optpKalpha,optpKbeta) % ORG ALK
             M(row_alk, [tp(j).ipalpha,tp(j).iphalpha] ) = [1, -1]; % or -, +?
             % M(row_alk, tp(j).iphalpha ) = -1;
             % M(row_alk, tp(j).ipalpha ) = 1;
-            % should rescale when I can
+            % rescale
+            M(row,:) = M(row,:)*1e5; % 1e5 for 1umol order
+            M(row_alk,:) = M(row_alk,:)*1e1; % 1e2 for TS 0.1 order
         end
 
         if optpKbeta == 1
             % Kbeta = [beta][H]/[Hbeta] unknown alkalinity TBeta
             row = row + 1;
-            M(row,[ ipTBeta, tp(j).ipbeta, tp(j).ipbeta]) = [1, -1, -1];
+            M(row,[ ipTBeta, tp(j).ipbeta, tp(j).iphbeta]) = [1, -1, -1];
             mc = union(mc, [ipTBeta, tp(j).ipbeta, tp(j).iphbeta]);
             mr = [mr,row];
             M(row_alk, [tp(j).ipbeta,tp(j).iphbeta] ) = [1, -1]; 
             % rescale?
+            M(row,:) = M(row,:)*1e5; % 1e5 for 1umol order
+            M(row_alk,:) = M(row_alk,:)*1e1; % 1e2 for TS 0.1 order
         end
 
         tp(j).mr = mr;
@@ -490,7 +499,7 @@ function sys = mksys(obs,phscale,optpKalpha,optpKbeta) % ORG ALK
         end
         if optpKbeta == 1
             ifixed(end) = ipTBeta;
-            ifixed(end) = tp(k).ipKbeta;
+            ifixed(end) = tp(j).ipKbeta;
         end
         tp(j).ifixed = ifixed;
         tp(j).ifree = setdiff(union(tp(j).mc,tp(j).kc),ifixed);
@@ -513,7 +522,7 @@ function sys = mksys(obs,phscale,optpKalpha,optpKbeta) % ORG ALK
         end
         if optpKbeta == 1
             jfixed(end) = ipTBeta;
-            jfixed(end) = tp(k).ipKbeta;
+            jfixed(end) = tp(j).ipKbeta;
         end
         tp(j).jfixed = jfixed;
         tp(j).jfree = setdiff(union(tp(j).mc,tp(j).kc),jfixed);

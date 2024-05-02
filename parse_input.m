@@ -233,17 +233,17 @@ function [obs,yobs,wobs,sys] = parse_input(obs,sys,opt,nD)
         if opt.pKalpha == 1
             % Organic Alkalinity Alpha
             if (~isfield(obs(i), 'TAlpha')) || (~isgood(obs(i).TAlpha))
-                obs(i).TAlpha           = 5; % guess 5 umol/kg
-                yobs(i,sys.ipTAlpha)    = p(5e-6); 
+                obs(i).TAlpha           = nan; 
+                yobs(i,sys.ipTAlpha)    = p(5e-6); % guess 5 umol/kg
             else
                 if ((obs(i).TAlpha) == 0)
                     obs(i).TAlpha       = 1e-9;
                 end
-                yobs(i,sys.ipTAlpha)    = p(obs(i).TAlpha);
+                yobs(i,sys.ipTAlpha)    = p(obs(i).TAlpha*1e-6);
             end
             if (~isfield(obs(i), 'eTAlpha')) || (~isgood(obs(i).eTAlpha))
-                obs(i).eTAlpha          = 2; % 5 ± 2 umol/kg
-                wobs(i,sys.ipTAlpha)    = w(obs(i).TAlpha,obs(i).eTAlpha);
+                obs(i).eTAlpha          = nan; 
+                wobs(i,sys.ipTAlpha)    = w(5,2); % 5 ± 2 umol/kg
             else
                 wobs(i,sys.ipTAlpha)    = w(obs(i).TAlpha,obs(i).eTAlpha);
             end
@@ -253,16 +253,16 @@ function [obs,yobs,wobs,sys] = parse_input(obs,sys,opt,nD)
             % Organic Alkalinity Beta
             if (~isfield(obs(i),'TBeta')) || (~isgood(obs(i).TBeta))
                 obs(i).TBeta        = nan;
-                yobs(i,sys.ipTBeta) = nan;
+                yobs(i,sys.ipTBeta) = p(5e-6);
             else
                 if ((obs(i).TBeta) == 0)
                     obs(i).TBeta    = 1e-9;
                 end
-                yobs(i,sys.ipTBeta) = p(obs(i).TBeta);
+                yobs(i,sys.ipTBeta) = p(obs(i).TBeta*1e-6);
             end
             if (~isfield(obs(i),'eTBeta')) || (~isgood(obs(i).eTBeta))
                 obs(i).eTBeta       = nan;
-                wobs(i,sys.ipTBeta) = nan;
+                wobs(i,sys.ipTBeta) = w(5,2);
             else
                 wobs(i,sys.ipTBeta) = w(obs(i).TBeta,obs(i).eTBeta);
             end
@@ -888,7 +888,7 @@ function [obs,yobs,wobs,sys] = parse_input(obs,sys,opt,nD)
 
             if opt.pKalpha == 1
                 % pKalpha system
-                pKalpha = 4.8; % default
+                pKalpha = 4.65; % default
                 if (~isfield(obs(i).tp(j),'pKalpha')) || (~isgood(obs(i).tp(j).pKalpha))
                     obs(i).tp(j).pKalpha        = nan;
                     yobs(i,sys.tp(j).ipKalpha)  = pKalpha; 
@@ -897,11 +897,11 @@ function [obs,yobs,wobs,sys] = parse_input(obs,sys,opt,nD)
                     yobs(i,sys.tp(j).ipKalpha)  = obs(i).tp(j).pKalpha;
                 end
                 if (~isfield(obs(i).tp(j),'epKalpha')) || (~isgood(obs(i).tp(j).epKalpha))
-                    % Kalpha     = q(4.8); % default
+                    Kalpha     = q(pKalpha); % default
                     % pKalpha    = (4.0); % default
                     obs(i).tp(j).epKalpha       = nan;
-                    % wobs(i,sys.tp(j).ipKalpha)  = w(Kalpha,0.10*Kalpha); % 10%
-                    wobs(i,sys.tp(j).ipKalpha)  = (0.1*pKalpha)^(-2);
+                    wobs(i,sys.tp(j).ipKalpha)  = w(Kalpha,0.10*Kalpha); % 10%
+                    % wobs(i,sys.tp(j).ipKalpha)  = (0.1*pKalpha)^(-2);
                 else
                     wobs(i,sys.tp(j).ipKalpha)  = (obs(i).tp(j).pKalpha)^(-2);
                 end
@@ -923,8 +923,9 @@ function [obs,yobs,wobs,sys] = parse_input(obs,sys,opt,nD)
 
             if opt.pKbeta == 1
                 % pKbeta system
+                pKbeta      = 6.95; % default
                 if (~isfield(obs(i).tp(j),'pKbeta')) || (~isgood(obs(i).tp(j).pKbeta))
-                    pKbeta      = 7; % default
+                    % pKbeta      = 7; % default
                     obs(i).tp(j).pKbeta         = nan;
                     yobs(i,sys.tp(j).ipKbeta)   = pKbeta; 
                 else
@@ -932,9 +933,11 @@ function [obs,yobs,wobs,sys] = parse_input(obs,sys,opt,nD)
                     yobs(i,sys.tp(j).ipKbeta)   = obs(i).tp(j).pKbeta;
                 end
                 if (~isfield(obs(i).tp(j),'epKbeta')) || (~isgood(obs(i).tp(j).epKbeta))
-                    pKbeta      = 7; % default
+                    % pKbeta      = 7; % default
+                    Kbeta                       = q(pKbeta);
                     obs(i).tp(j).epKbeta        = nan;
-                    wobs(i,sys.tp(j).ipKbeta)   = (0.10*pKbeta)^(-2);
+                    % wobs(i,sys.tp(j).ipKbeta)   = (0.10*pKbeta)^(-2);
+                    wobs(i,sys.tp(j).ipKbeta)   = w(Kbeta,0.1*Kbeta);
                 else
                     wobs(i,sys.tp(j).ipKbeta)   = (obs(i).tp(j).pKbeta)^(-2);
                 end

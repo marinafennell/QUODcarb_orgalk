@@ -20,9 +20,10 @@ opt.printmes = 0; % 1 = on, 0 = off
 
 opt.turnoff.TB  = 0; % 1 = on (no TB formulation used)
 opt.turnoff.pK1 = 0;
-opt.pKalpha = 1;
+opt.pKalpha     = 0;
+opt.pKbeta      = 0;
 
-% load output_mat_files/K16/est09; % calculated pCO2 at 25C
+load output_mat_files/K16/est26; % Q5
 % for FP
 % obs(1).tp(1).pco2 = 363.1889;
 % obs(1).tp(1).epco2 = 0.0021*obs(1).tp(1).pco2;
@@ -34,6 +35,11 @@ opt.pKalpha = 1;
 % obs(4).tp(1).epco2 = 0.0021*obs(4).tp(1).pco2;
 % obs(5).tp(1).pco2 = 961.0366;
 % obs(5).tp(1).epco2 = 0.0021*obs(5).tp(1).pco2;
+
+p = @(x) -log10( x );  
+q = @(x)  10.^( -x ); 
+w = @(x,e) abs( p(1 + e./x) ); %.^(-2); does ^-2 in code
+
 
 for i = 1:nD
     
@@ -62,6 +68,14 @@ for i = 1:nD
 
     % obs(i).tp(1).pco2 = est09(i).tp(2).pco2;
     % obs(i).tp(1).epco2 = est09(i).tp(2).epco2;
+    obs(i).tp(1).pco2 = est26(i).tp(2).pco2;
+    obs(i).tp(1).epco2 = est26(i).tp(2).epco2;
+
+    % obs(i).TAlpha   = 5;
+    % obs(i).eTAlpha  = 0.2;
+    % obs(i).tp(1).pKalpha = 4.4;
+    % Kalpha = q(obs(i).tp(1).pKalpha);
+    % obs(i).tp(1).epKalpha = w(Kalpha, 0.01*Kalpha); % 1% on K
 end
 
 [est,obs,sys,iflag] = QUODcarb(obs,opt);

@@ -479,7 +479,7 @@ function sys = mksys(obs,phscale,optpKalpha,optpKbeta) % ORG ALK
             mc = union(mc, [ipTBeta, tp(j).ipbeta, tp(j).iphbeta]);
             mr = [mr,row];
             M(row_alk, [tp(j).ipbeta,tp(j).iphbeta] ) = [1, -1]; 
-            % rescale?
+            % rescale
             M(row,:) = M(row,:)*1e5; % 1e5 for 1umol order
             M(row_alk,:) = M(row_alk,:)*1e1; % 1e2 for TS 0.1 order
         end

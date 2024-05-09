@@ -43,7 +43,7 @@ function [x,J,iflag] = newtn(x0, F, tol)
     if (itno>=MAXIT)
         if norm(F0(1:end-1)) < tol*1e1
             iflag = 2;
-            fprintf('Warniing Newton''s Method did not converge.\n ')
+            fprintf('Warning Newton''s Method did not converge.\n ')
             fprintf('At max iteration, value was one order of magnitude more than tolerance...\n')
             fprintf('Consider keeping. \n')
         else

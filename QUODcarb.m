@@ -560,17 +560,17 @@ function z0 = init(opt,yobs,sys)
     TH2S    = q(yobs(sys.ipTH2S));
     y0(sys.ipTH2S) = p(TH2S);
 
-    TCa = q(yobs(sys.ipTCa));
+    TCa     = q(yobs(sys.ipTCa));
     y0(sys.ipTCa) = p(TCa);
 
-    % if opt.pKalpha == 1 % I think these are set in parse_in
-    %     TAlpha = 5e-6; % 5 umol/kg ?
-    %     y0(sys.ipTAlpha) = p(TAlpha);
-    % end
-    % if opt.pKbeta == 1
-    %     TBeta = 5e-6; % 5 umol/kg ?
-    %     y0(sys.ipTBeta) = p(TBeta);
-    % end
+    if opt.pKalpha == 1 
+        TAlpha = q(yobs(sys.ipTAlpha));
+        y0(sys.ipTAlpha) = p(TAlpha);
+    end
+    if opt.pKbeta == 1
+        TBeta = q(yobs(sys.ipTBeta));
+        y0(sys.ipTBeta) = p(TBeta);
+    end
 
     nTP = length(sys.tp);
     for i = 1:nTP
@@ -678,23 +678,20 @@ function z0 = init(opt,yobs,sys)
         y0(sys.tp(i).iph_nbs)   = p(h_nbs);
 
         if opt.pKalpha == 1
-            % alpha = 1e-6; % 1 umol/kg ?
-            % halpha = 0.5e-6;
-            % halpha = 4e-6; % 4 umol/kg?
-            Talpha = q(y0(sys.ipTAlpha));
-            % alpha = (4/5)*Talpha;
-            % halpha = (1/5)*Talpha;
-            alpha = (1/2)*Talpha;
-            halpha = (1/2)*Talpha;
+            Kalpha = q(y0(sys.tp(i).ipKalpha));   
+            alpha = (Kalpha*TAlpha)/(h+Kalpha);
+            halpha = TAlpha - alpha;
+            % alpha = (1/2)*Talpha; % make a function of pH
+            % halpha = (1/2)*Talpha;
             y0(sys.tp(i).ipalpha) = p(alpha);
             y0(sys.tp(i).iphalpha) = p(halpha);
         end
         if opt.pKbeta == 1
-            % beta = 0.5e-6; % 0.5 umol/kg ?
-            % hbeta = 0.5e-6;
-            Tbeta = q(y0(sys.ipTBeta));
-            beta = (1/2)*Tbeta;
-            hbeta = (1/2)*Tbeta;
+            Kbeta = q(y0(sys.tp(i).ipKbeta));
+            beta = (Kbeta*TBeta)/(h+Kbeta);
+            hbeta = TBeta - beta;
+            % beta = (1/2)*Tbeta;
+            % hbeta = (1/2)*Tbeta;
             y0(sys.tp(i).ipbeta) = p(beta);
             y0(sys.tp(i).iphbeta) = p(hbeta);
         end

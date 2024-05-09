@@ -888,15 +888,16 @@ function [obs,yobs,wobs,sys] = parse_input(obs,sys,opt,nD)
 
             if opt.pKalpha == 1
                 % pKalpha system
-                pKalpha = 4.65; % default
                 if (~isfield(obs(i).tp(j),'pKalpha')) || (~isgood(obs(i).tp(j).pKalpha))
                     obs(i).tp(j).pKalpha        = nan;
+                    pKalpha = 4.0; % default
                     yobs(i,sys.tp(j).ipKalpha)  = pKalpha; 
                 else
                     pKalpha = obs(i).tp(j).pKalpha;
                     yobs(i,sys.tp(j).ipKalpha)  = obs(i).tp(j).pKalpha;
                 end
                 if (~isfield(obs(i).tp(j),'epKalpha')) || (~isgood(obs(i).tp(j).epKalpha))
+                    pKalpha = 4.0; % default
                     Kalpha     = q(pKalpha); % default
                     % pKalpha    = (4.0); % default
                     obs(i).tp(j).epKalpha       = nan;
@@ -923,20 +924,18 @@ function [obs,yobs,wobs,sys] = parse_input(obs,sys,opt,nD)
 
             if opt.pKbeta == 1
                 % pKbeta system
-                pKbeta      = 6.95; % default
                 if (~isfield(obs(i).tp(j),'pKbeta')) || (~isgood(obs(i).tp(j).pKbeta))
-                    % pKbeta      = 7; % default
+                    pKbeta                  = 6.95; % default
                     obs(i).tp(j).pKbeta         = nan;
                     yobs(i,sys.tp(j).ipKbeta)   = pKbeta; 
                 else
-                    pKbeta      = obs(i).tp(j).pKbeta;
+                    pKbeta                      = obs(i).tp(j).pKbeta;
                     yobs(i,sys.tp(j).ipKbeta)   = obs(i).tp(j).pKbeta;
                 end
                 if (~isfield(obs(i).tp(j),'epKbeta')) || (~isgood(obs(i).tp(j).epKbeta))
-                    % pKbeta      = 7; % default
+                    pKbeta                      = 6.95; % default
                     Kbeta                       = q(pKbeta);
                     obs(i).tp(j).epKbeta        = nan;
-                    % wobs(i,sys.tp(j).ipKbeta)   = (0.10*pKbeta)^(-2);
                     wobs(i,sys.tp(j).ipKbeta)   = w(Kbeta,0.1*Kbeta);
                 else
                     wobs(i,sys.tp(j).ipKbeta)   = (obs(i).tp(j).pKbeta)^(-2);

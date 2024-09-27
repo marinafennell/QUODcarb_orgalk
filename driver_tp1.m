@@ -20,6 +20,7 @@ opt.printmes = 0; % 1 = on, 0 = off
 
 opt.turnoff.TB  = 0; % 1 = on (no TB formulation used)
 opt.turnoff.pK1 = 0;
+opt.turnoff.pK2 = 0;
 opt.pKalpha     = 0;
 opt.pKbeta      = 0;
 
@@ -83,6 +84,8 @@ end
 %%
 
 for i = 1:nD
-    pk1on(i) = est(i).tp(1).pK1;
+    pK2on(i) = est(i).tp(1).pK2;
 end
+
+
 

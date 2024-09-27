@@ -358,7 +358,12 @@ function [obs,yobs,wobs,sys] = parse_input(obs,sys,opt,nD)
             if (~isfield(obs(i).tp(j),'pK1')) || (~isgood(obs(i).tp(j).pK1))
                 obs(i).tp(j).pK1       = nan;
                 if opt.turnoff.pK1 == 1 % do not input pK1
-                    yobs(i,sys.tp(j).ipK1) = nan;
+                    if nTP > 1
+                        error(['opt.turnoff.pK1 only works with one tp, not 2+. ' ...
+                                'Must input at tp(1) only.']);
+                    else
+                        yobs(i,sys.tp(j).ipK1) = nan;
+                    end
                 else % do input pK1
                     yobs(i,sys.tp(j).ipK1) = pK1;
                 end
@@ -377,13 +382,26 @@ function [obs,yobs,wobs,sys] = parse_input(obs,sys,opt,nD)
             end
             if (~isfield(obs(i).tp(j),'pK2')) || (~isgood(obs(i).tp(j).pK2))
                 obs(i).tp(j).pK2       = nan;
-                yobs(i,sys.tp(j).ipK2) = pK2;
+                if opt.turnoff.pK2 == 1
+                    if nTP > 1
+                        error(['opt.turnoff.pK2 only works with one tp, not 2+. ' ...
+                                'Must input at tp(1) only.']);
+                    else
+                        yobs(i,sys.tp(j).ipK2) = nan;
+                    end
+                else
+                    yobs(i,sys.tp(j).ipK2) = pK2;
+                end
             else
                 yobs(i,sys.tp(j).ipK2) = obs(i).tp(j).pK2;
             end
             if (~isfield(obs(i).tp(j),'epK2')) || (~isgood(obs(i).tp(j).epK2))
                 obs(i).tp(j).epK2      = nan;
-                wobs(i,sys.tp(j).ipK2) = (epK2)^(-2);
+                if opt.turnoff.pK2 == 1
+                    wobs(i,sys.tp(j).ipK2) = nan;
+                else
+                    wobs(i,sys.tp(j).ipK2) = (epK2)^(-2);
+                end
             else
                 wobs(i,sys.tp(j).ipK2) = (obs(i).tp(j).epK2)^(-2);
             end

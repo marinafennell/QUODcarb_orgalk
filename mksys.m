@@ -1,4 +1,3 @@
-
 function sys = mksys(obs,phscale,optpKalpha,optpKbeta) % ORG ALK
 %
 % Private function for QUODcarb.m
@@ -464,9 +463,7 @@ function sys = mksys(obs,phscale,optpKalpha,optpKbeta) % ORG ALK
             M(row,[ ipTAlpha, tp(j).ipalpha, tp(j).iphalpha]) = [1, -1, -1];
             mc = union(mc, [ipTAlpha, tp(j).ipalpha, tp(j).iphalpha]);
             mr = [mr,row];
-            M(row_alk, [tp(j).ipalpha,tp(j).iphalpha] ) = [1, -1]; % or -, +?
-            % M(row_alk, tp(j).iphalpha ) = -1;
-            % M(row_alk, tp(j).ipalpha ) = 1;
+            M(row_alk, [tp(j).ipalpha,tp(j).iphalpha] ) = [-1, +1]; % or -, +?
             % rescale
             M(row,:) = M(row,:)*1e5; % 1e5 for 1umol order
             M(row_alk,:) = M(row_alk,:)*1e1; % 1e2 for TS 0.1 order
@@ -478,7 +475,7 @@ function sys = mksys(obs,phscale,optpKalpha,optpKbeta) % ORG ALK
             M(row,[ ipTBeta, tp(j).ipbeta, tp(j).iphbeta]) = [1, -1, -1];
             mc = union(mc, [ipTBeta, tp(j).ipbeta, tp(j).iphbeta]);
             mr = [mr,row];
-            M(row_alk, [tp(j).ipbeta,tp(j).iphbeta] ) = [1, -1]; 
+            M(row_alk, [tp(j).ipbeta,tp(j).iphbeta] ) = [-1, +1]; 
             % rescale
             M(row,:) = M(row,:)*1e5; % 1e5 for 1umol order
             M(row_alk,:) = M(row_alk,:)*1e1; % 1e2 for TS 0.1 order

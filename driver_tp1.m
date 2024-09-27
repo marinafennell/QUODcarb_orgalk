@@ -80,7 +80,9 @@ end
 
 [est,obs,sys,iflag] = QUODcarb(obs,opt);
 
+%%
 
-
-
+for i = 1:nD
+    pk1on(i) = est(i).tp(1).pK1;
+end
 

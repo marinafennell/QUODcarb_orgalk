@@ -3,7 +3,7 @@
 
 load data.mat; % NEW as of Nov.11
 [in] = data;
-nD = length(in);
+nD = 5; %length(in);
 
 % choose options for opt structure
 opt.K1K2 = 16; % option for K1K2 formulation
@@ -20,20 +20,18 @@ opt.printmes = 0; % 1 = on, 0 = off
 
 opt.turnoff.TB  = 0; % 1 = on (no TB formulation used)
 opt.turnoff.pK1 = 0;
-opt.pKalpha     = 0;    
-opt.pKbeta      = 1;
+opt.pKalpha     = 1;    
+opt.pKbeta      = 0;
 
 % read in GOMECC data and put into obs structure
 for i = 1:nD
-    % obs(i).TAlpha           = 0.5;
+    % obs(i).TAlpha           = 1;
     % obs(i).eTAlpha          = 0.05;
-    % obs(i).tp(1).pKalpha    = 4.0;
-    % obs(i).tp(1).epKalpha   = 0.01;
+    % obs(i).tp(1).pKalpha    = 4.0; % epK is 10% on K
 
-    obs(i).TBeta           = 0.01;
-    obs(i).eTBeta          = 0.001;
-    obs(i).tp(1).pKbeta    = 6.5;
-    % obs(i).tp(1).epKbeta   = 0.5; % default is 10% on K
+    % obs(i).TBeta            = 10;
+    % obs(i).eTBeta           = 0.5;
+    % obs(i).tp(1).pKbeta     = 7.8; % epK is 10% on K, built in
 
     % measurements that are independent of (T,P)
     obs(i).TC    = in(5,i); % (umol/kg)
@@ -65,7 +63,7 @@ for i = 1:nD
     obs(i).tp(1).eco3 = in(11,i)*0.02; % 2% from Jon Sharp NEW 1/25/24
 
     % third (T,P)-dependent measurement
-    obs(i).tp(2).T     = 20 ; %degC
+    obs(i).tp(2).T     = 20 ; % degC
     obs(i).tp(2).eT    = 0.03 ; % from cruise report
     obs(i).tp(2).P     = 0.0 ; % dbar (surface pressure for pco2)
     obs(i).tp(2).eP    = 0.07 ;
@@ -73,210 +71,49 @@ for i = 1:nD
     obs(i).tp(2).epco2 = in(10,i)*0.0021; % 0.21% relative std error (avg)
 end
 obs_backup = obs;
+% keyboard
+
 % [est,obs,sys,iflag] = QUODcarb(obs,opt);
 
-[est,~,~,~] = QUODcarb(obs,opt);
-% est001 = est; % TAlpha = 1umol/kg pm 0.1
-% save output_mat_files/Talpha/est001;
-est0_01 = est; % TBeta = 0.01 umol/kg pm 0.001
-save output_mat_files/Tbeta/est0_01;
+Tin = [0.1; 1; 5; 10; 20; 50; 100; 200; 500; 1000; 2000; 3000];
+pKin = 3.4:0.5:8.4;
+[X,Y] = meshgrid(Tin,pKin);
+Z = nan*X;
+Zind = nan*X;
 
-obs = obs_backup;
-for i = 1:nD
-    % obs(i).TAlpha   = 10;
-    % obs(i).eTAlpha  = 1;
-    obs(i).TBeta   = 0.05;
-    obs(i).eTBeta  = 0.005;
-end
-[est,~,~,~] = QUODcarb(obs,opt);
-% est010 = est; % TAlpha = 10umol/kg pm 1
-% save output_mat_files/Talpha/est010;
-est0_05 = est; % TBeta = 0.05 umol/kg pm 0.005
-save output_mat_files/Tbeta/est0_05;
+% for k = 1:length(pKin)
+%     for j= 1:length(Tin)
+for j = 1:length(X(:))
+    obs = obs_backup;
+    x = X(j);
+    y = Y(j);
+    for i = 1:nD
+        % obs(i).TAlpha           = Tin(j);
+        % obs(i).eTAlpha          = 0.05*Tin(j); % eTAlpha is 5%
+        % obs(i).tp(1).pKalpha    = pKin(k); % epK is 10% on K
+        obs(i).TAlpha           = x;
+        obs(i).eTAlpha          = 0.05*x; % eTAlpha is 5%
+        obs(i).tp(1).pKalpha    = y; % epK is 10% on K
+    end
+    [est,~,~,~]     = QUODcarb(obs,opt);
+    fname = sprintf('output_mat_files/all132/est_%d',j);
+    save(fname,'est');
 
-obs = obs_backup;
-for i = 1:nD
-    % obs(i).TAlpha   = 50;
-    % obs(i).eTAlpha  = 5;
-    obs(i).TBeta   = 0.1;
-    obs(i).eTBeta  = 0.01;
-end
-[est,~,~,~] = QUODcarb(obs,opt);
-% est050 = est; % TAlpha = 50umol/kg pm 5
-% save output_mat_files/Talpha/est050;
-est00_1 = est; % TBeta = 0.1 umol/kg pm 0.01
-save output_mat_files/Tbeta/est00_1;
-
-obs = obs_backup;
-for i = 1:nD
-    % obs(i).TAlpha   = 100;
-    % obs(i).eTAlpha  = 10;
-    obs(i).TBeta   = 0.5;
-    obs(i).eTBeta  = 0.05;
-end
-[est,~,~,~] = QUODcarb(obs,opt);
-% est100 = est; % TAlpha = 100umol/kg pm 10
-% save output_mat_files/Talpha/est100;
-est00_5 = est; % TBeta = 0.5 umol/kg pm 0.055
-save output_mat_files/Tbeta/est00_5;
-
-obs = obs_backup;
-for i = 1:nD
-    % obs(i).TAlpha   = 150;
-    % obs(i).eTAlpha  = 15;
-    obs(i).TBeta   = 1.0;
-    obs(i).eTBeta  = 0.1;
-end
-[est,~,~,~] = QUODcarb(obs,opt);
-% est150 = est; % TAlpha = 150umol/kg pm 15
-% save output_mat_files/Talpha/est150;
-est001_ = est; % TBeta = 1umol/kg pm 0.1
-save output_mat_files/Tbeta/est001_;
-
-obs = obs_backup;
-for i = 1:nD
-    % obs(i).TAlpha   = 200;
-    % obs(i).eTAlpha  = 20;
-    obs(i).TBeta   = 5.0;
-    obs(i).eTBeta  = 0.5;
-end
-[est,~,~,~] = QUODcarb(obs,opt);
-% est200 = est; % TAlpha = 200umol/kg pm 20
-% save output_mat_files/Talpha/est200;
-est005_ = est; % TBeta = 5umol/kg pm 0.5
-save output_mat_files/Tbeta/est005_;
-
-obs = obs_backup;
-for i = 1:nD
-    % obs(i).TAlpha   = 250;
-    % obs(i).eTAlpha  = 25;
-    obs(i).TBeta   = 10.0;
-    obs(i).eTBeta  = 1.0;
-end
-[est,~,~,~] = QUODcarb(obs,opt);
-% est250 = est; % TAlpha = 250umol/kg pm 25
-% save output_mat_files/Talpha/est250
-est010_ = est; % TAlpha = 10umol/kg pm 1
-save output_mat_files/Tbeta/est010_;
-
-obs = obs_backup;
-for i = 1:nD
-    % obs(i).TAlpha   = 300;
-    % obs(i).eTAlpha  = 30;
-    obs(i).TBeta   = 25;
-    obs(i).eTBeta  = 2.5;
-end
-[est,~,~,~] = QUODcarb(obs,opt);
-% est300 = est; % TAlpha = 300umol/kg pm 30
-% save output_mat_files/Talpha/est300;
-est025_ = est; % TBeta = 25umol/kg pm 2.5
-save output_mat_files/Tbeta/est025_;
-
-obs = obs_backup;
-for i = 1:nD
-    % obs(i).TAlpha   = 400;
-    % obs(i).eTAlpha  = 40;
-    obs(i).TBeta   = 50;
-    obs(i).eTBeta  = 5;
-end
-[est,~,~,~] = QUODcarb(obs,opt);
-% est400 = est; % TAlpha = 400umol/kg pm 40
-% save output_mat_files/Talpha/est400;
-est050_ = est; % TBeta = 50umol/kg pm 5
-save output_mat_files/Tbeta/est050_;
-
-obs = obs_backup;
-for i = 1:nD
-    % obs(i).TAlpha   = 500;
-    % obs(i).eTAlpha  = 50;
-    obs(i).TBeta   = 100;
-    obs(i).eTBeta  = 10;
-end
-[est,~,~,~] = QUODcarb(obs,opt);
-% est500 = est; % TAlpha = 500umol/kg pm 50
-% save output_mat_files/Talpha/est500;
-est100_ = est; % TBeta = 100umol/kg pm 10
-save output_mat_files/Tbeta/est100_;
-
-obs = obs_backup;
-for i = 1:nD
-    % obs(i).TAlpha   = 900;
-    % obs(i).eTAlpha  = 90;
-    obs(i).TBeta   = 250;
-    obs(i).eTBeta  = 25;
-end
-[est,~,~,~] = QUODcarb(obs,opt);
-% est900 = est; % TAlpha = 900umol/kg pm 90
-% save output_mat_files/Talpha/est900;
-est250_ = est; % TBeta = 250umol/kg pm 25
-save output_mat_files/Tbeta/est250_;
-
-
-
-% for i = 1:nD
-%     dTC(i) = obs(i).TC - est(i).TC;
-%     zscore(i,1) = dTC(i)/2.01;
-% 
-%     dTA(i) = obs(i).TA - est(i).TA;
-%     zscore(i,2) = dTA(i)/1.78;
-% 
-%     dph(i) = obs(i).tp(1).ph - est(i).tp(1).ph;
-%     zscore(i,3) = dph(i)/0.0004;
-% 
-%     dpco2(i) = obs(i).tp(2).pco2 - est(i).tp(2).pco2;
-%     zscore(i,4) = dpco2(i)/obs(i).tp(2).epco2;
-% 
-%     dco3(i) = obs(i).tp(1).co3 - est(i).tp(1).co3;
-%     zscore(i,5) = dco3(i)/obs(i).tp(1).eco3;
-% 
-%     Talpha(i) = est(i).TAlpha;
-%     pKalpha(i) = est(i).tp(1).pKalpha;
-%     alpha(i) = est(i).tp(1).alpha;
-%     halpha(i) = est(i).tp(1).halpha;
-
-%     Tbeta(i) = est(i).TBeta;
-%     pKbeta(i) = est(i).tp(1).pKbeta;
-%     beta(i) = est(i).tp(1).beta;
-%     hbeta(i) = est(i).tp(1).hbeta;
+    for i = 1:nD
+        f(i) = est(i).f;
+    end
+    [ind,mn] = min(f);
+    Z(j) = mn;
+    Zind(j) = ind;
+    clear est;
+%     end
 % end
-
-% fprintf('\n')
-% fprintf('med zTC = %f, ', median(zscore(:,1)))
-% fprintf('med zTA = %f, ', median(zscore(:,2)))
-% fprintf('med zpH = %f, ', median(zscore(:,3)))
-% fprintf('\n')
-% fprintf('med zpCO2 = %f, ', median(zscore(:,4)))
-% fprintf('med zCO3 = %f ', median(zscore(:,5)))
-% fprintf('\n')
-% fprintf('Talpha = %f, ', median(Talpha))
-% fprintf('pKalpha = %f, ', median(pKalpha))
-% fprintf('\n')
-% fprintf('alpha = %f, ', median(alpha))
-% fprintf('halpha = %f, ', median(halpha))
-% fprintf('\n')
-% fprintf('Tbeta = %f, ', median(Tbeta))
-% fprintf('pKbeta = %f, ', median(pKbeta))
-% fprintf('\n')
-% fprintf('beta = %f, ', median(beta))
-% fprintf('hbeta = %f, ', median(hbeta))
-% fprintf('\n')
+end
 
 
-% Q5: All five input
-% CT AT pH pCO2 CO3 (Q5) (fid5)
-% [est,obs,sys,iflag] = QUODcarb(obs,opt);
 
-% % TC pCO2 (Q2)(fid03)
-% obs = obs_backup;
-% for i = 1:nD
-%     obs(i).TA = nan;         obs(i).eTA = nan;
-%     obs(i).tp(2).ph = nan;   obs(i).tp(2).eph = nan;
-%     obs(i).tp(2).co3 = nan;  obs(i).tp(2).eco3 = nan;
-% end
-% [est,obs,~,~] = QUODcarb(obs,opt);
-% est03   = est;
-% tp      = 3;
-% fid03   = 'compare_TC_pco2.csv';
-% [A]     = compare(obs,est,opt,tp,7,fid03);
+
+
+
 
 

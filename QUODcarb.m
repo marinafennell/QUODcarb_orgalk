@@ -55,7 +55,7 @@ function [est,obs,sys,iflag,opt] = QUODcarb(obs,opt)
 %                                                   (T:2-35)    (S:20-40)
 %           x = x(GEOSECS)            ~NOT AVAILABLE IN QUODcarb~
 %           x = x(Peng)               ~NOT AVAILABLE IN QUODcarb~
-%           x = x(Millero, 1979)      ~NOT AVAILABLE IN QUODcarb~
+%           8 = Millero, 1979 PURE WATER ONLY       (T:0-50)    (S: 0.)
 %           9 = Cai and Wang, 1998                  (T:2-35)    (S:0-49)
 %          10 = Lueker et al., 2000    (DEFAULT)    (T:2-35)    (S:19-43)
 %          11 = Mojica Prieto and Millero, 2002     (T:0-45)    (S:5-42)
